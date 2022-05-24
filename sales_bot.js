@@ -40,7 +40,7 @@ const runSalesBot = async () => {
     let lastKnownSignature;
     const options = {};
 
-    
+
     try {
         signatures = await solanaConnection.getSignaturesForAddress(projectPubKey, options);
         if (!signatures.length) {
@@ -51,7 +51,7 @@ const runSalesBot = async () => {
         console.log("error fetching signatures: ", err);
     }
 
-      
+
 
     try {
         iw = signatures.length - 1;
@@ -88,7 +88,6 @@ const runSalesBot = async () => {
                         if (marketplaceMap[marketplaceAccount]) {
                             const metadata = await getMetadata(txn.meta.postTokenBalances[0].mint);
 
-                            Sales.body.push(txn);
                             Sales.done.push(signature);
 
                             const writeData = await fs.writeFileSync(
@@ -98,19 +97,18 @@ const runSalesBot = async () => {
                                     if (err) console.log(err);
                                 }
                             );
-                            
+
 
 
                             if (!metadata) {
-                                console.log("couldn't get metadata");                                
+                                console.log("couldn't get metadata");
                             }
 
-                            printSalesInfo(dateString, price, signature, metadata.name, marketplaceMap[marketplaceAccount], metadata.image);
+                            printSalesInfo(dateString, price, signature, metadata.name, marketplaceMap[marketplaceAccount], metadata.image, Math.abs(txn.meta.preBalances[0]), Math.abs(txn.meta.postBalances[0]), Math.abs(solanaWeb3.LAMPORTS_PER_SOL));
                             await postSaleToDiscord(metadata.name, price, dateString, signature, metadata.image, Sales)
-                            
+
                         } else {
                             console.log("not a supported marketplace sale");
-                            Sales.body.push(txn);
                             Sales.done.push(signature);
 
                             const writeData2 = await fs.writeFileSync(
@@ -124,7 +122,7 @@ const runSalesBot = async () => {
                     }
 
                 } catch (err) {
-                    console.log("error while going through signatures: ", err);                    
+                    console.log("error while going through signatures: ", err);
                 }
 
 
@@ -133,34 +131,34 @@ const runSalesBot = async () => {
                 if (iw >= 0) {
                     readSignatures();
                 } else {
-                    console.log(`[] Problem Fetching - Signature`);                    
+                    console.log(`[] Problem Fetching - Signature`);
                 }
-            }, 1000);
+            }, 5000);
 
         }
 
         for (let i = signatures.length - 1; i >= 0; i--) {
-            let {signature} = signatures[i];
-    
+            let { signature } = signatures[i];
+
             let _key = true, iterator = 0;
             _jsonString = await fs.readFileSync('./sales.json', 'utf8', (err, jsonString) => {
                 if (err) {
-                    console.log("File read failed:", err)                
+                    console.log("File read failed:", err)
                 }
             })
-    
-            JSON.parse(_jsonString).done.forEach(_sign => {            
+
+            JSON.parse(_jsonString).done.forEach(_sign => {
                 if (_sign != signature) {
 
-                    _key = false;                                                            
-                    iw = signatures.length - iterator;           
-                    i = 0;         
+                    _key = false;
+                    iw = signatures.length - iterator;
+                    i = 0;
                 }
                 iterator++
-            });  
-            
-           
-        } 
+            });
+
+
+        }
 
         readSignatures();
 
@@ -168,11 +166,11 @@ const runSalesBot = async () => {
         console.log(error)
     }
 
-        lastKnownSignature = signatures[0].signature;
-        if (lastKnownSignature) {
-            options.until = lastKnownSignature;
-        }
-    
+    lastKnownSignature = signatures[0].signature;
+    if (lastKnownSignature) {
+        options.until = lastKnownSignature;
+    }
+
 
 
 }
@@ -203,24 +201,34 @@ const getMetadata = async (tokenPubKey) => {
 }
 
 const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
+    let _tittle = `${title} (Alpha) $BUY ` + "`🧪`"
+    let _spec = ``;
+    let _royalties =   ((price*0.04)*0.5).toFixed(3)  + " $SOL +";
+    let _emote = `https://cdn.discordapp.com/emojis/905442001359614002.webp`
+
+    if (price <= 0.01) {
+        _tittle = `${title} (Alpha) LISTING ` + "`🧪`"
+        _royalties = ``;
+        _spec = `Listing `
+        _emote = `https://cdn.discordapp.com/emojis/905441646487957534.webp`
+    }
+
     axios.post(process.env.DISCORD_URL,
         {
             "embeds": [
                 {
-                    "title": `ALPHA ROTTEN (Gen #1) ` + "`🧪`",
-                    "description": `**Rotten:** *${title}*`,
+                    "title": _tittle,
+                    "footer": {
+                        "text": `${date} UTC`,
+                        "icon_url": _emote
+                    },                    
                     "color": 6288451,
                     "fields": [
                         {
-                            "name": "Price",
+                            "name": _spec + "Price",
                             "value": `${price} $SOL`,
                             "inline": true
-                        },
-                        {
-                            "name": "Date",
-                            "value": `${date} UTC`,
-                            "inline": true
-                        },
+                        },                        
                         {
                             "name": "MarketPlace",
                             "value": `${_market}`,
@@ -228,7 +236,21 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": "Transaction",
-                            "value": `**[Solscan Signature](https://explorer.solana.com/tx/${signature}): ` + "`" + signature + "`" + `**`
+                            "value": `**[Solscan Signature](https://solscan.io/tx/${signature}): ` + "`" + signature + "`" + `**`
+                        },
+                        {
+                            "name": `50% Royalties\n${_royalties}`,
+                            "value": `**[Dev Team - RT](https://solscan.io/tx/D6HxbQa7juwKoMDTUHJtJWW6WLG9gzKfRA8iQmd2oZ1x)**`,
+                            "inline": true
+                        }, {
+                            "name": '\u200B',
+                            "value": '\u200B',
+                            "inline": true
+                        },
+                        {
+                            "name": `50% Royalties\n${_royalties}`,
+                            "value": `**[Rottens DAO](https://solscan.io/tx/6zjwY1tbb3Lc2k6TcbAMWRHx6sQEVPt5Js7Aue6NkQH5)**`,
+                            "inline": true
                         },
                         {
                             "name": "Collection Links",
@@ -241,5 +263,5 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                 }
             ]
         }
-    )    
+    )
 }
