@@ -157,7 +157,19 @@ const runSalesBot = async () => {
                     i = 0;         
                 }
                 iterator++
-            });                
+            });
+            if (_key === false) {                        
+                Sales.done.push(signature);
+
+                fs.writeFile(
+                    "./busts_sales.json",
+                    JSON.stringify(Sales),
+                    (err) => {
+                        if (err) console.log(err);
+                    }
+                );         
+            } 
+    
         } 
 
         readSignatures();
