@@ -5,7 +5,7 @@ const Sales = require("./busts_sales.json")
 const fs = require("fs");
 
 process.env.PROJECT_ADDRESS = "8vqe79fS3hecnwiZdF7fVqH9A3ZsdfTGgwgz3hMsPb1V";
-process.env.DISCORD_URL = "https://discord.com/api/webhooks/945344240240697355/g0ATg3nHJJKJ4oqscmI6RSwJC5WTsIiB9bk-lGtX-u8Owe0Yt_WOv2EQF58Xl8731Tgj";
+process.env.DISCORD_URL = "https://discord.com/api/webhooks/978367308261117972/7DCgnq8fdJZ8WoIxeaS7NV0kZEajSN6zeUalGKhxYDVjdc5QtHh5FIpNYcj5Eb2tZB7_";
 
 if (!process.env.PROJECT_ADDRESS || !process.env.DISCORD_URL) {
     console.log("please set your environment variables!");
@@ -13,7 +13,7 @@ if (!process.env.PROJECT_ADDRESS || !process.env.DISCORD_URL) {
 }
 
 
-let _market, _jsonString;
+let _market, _jsonString, iw = 0;
 
 const projectPubKey = new solanaWeb3.PublicKey(process.env.PROJECT_ADDRESS);
 const url = solanaWeb3.clusterApiUrl('mainnet-beta');
@@ -39,86 +39,143 @@ const runSalesBot = async () => {
     let signatures;
     let lastKnownSignature;
     const options = {};
-    while (true) {
-        try {
-            signatures = await solanaConnection.getSignaturesForAddress(projectPubKey, options);
-            if (!signatures.length) {
-                console.log("polling...")
-                await timer(pollingInterval);
-                continue;
-            }
-        } catch (err) {
-            console.log("error fetching signatures: ", err);
-            continue;
+
+
+    try {
+        signatures = await solanaConnection.getSignaturesForAddress(projectPubKey, options);
+        if (!signatures.length) {
+            console.log("polling...")
+            await timer(pollingInterval);
+        }
+    } catch (err) {
+        console.log("error fetching signatures: ", err);
+    }
+
+      
+
+    try {
+        iw = signatures.length - 1;
+        function readSignatures() {
+            setTimeout(async function () {
+
+
+                try {
+                    let { signature } = signatures[iw];
+                    const txn = await solanaConnection.getTransaction(signature);
+                    console.log(signature)
+                    if (txn.meta && txn.meta.err != null) { }
+
+                    const dateString = new Date(txn.blockTime * 1000).toLocaleString();
+                    const price = Math.abs((txn.meta.preBalances[0] - txn.meta.postBalances[0])) / solanaWeb3.LAMPORTS_PER_SOL;
+                    const accounts = txn.transaction.message.accountKeys;
+                    const marketplaceAccount = accounts[accounts.length - 1].toString();
+                    let key = false;
+
+                    _jsonString = await fs.readFileSync('./busts_sales.json', 'utf8', (err, jsonString) => {
+                        if (err) {
+                            console.log("File read failed:", err)
+                            return
+                        }
+                    })
+
+                    JSON.parse(_jsonString).done.forEach(_sign => {
+                        if (_sign === signature) {
+                            key = true;
+                        }
+                    });
+
+                    if (key === false) {
+                        if (marketplaceMap[marketplaceAccount]) {
+                            const metadata = await getMetadata(txn.meta.postTokenBalances[0].mint);
+
+                            Sales.body.push(txn);
+                            Sales.done.push(signature);
+
+                            fs.writeFile(
+                                "./busts_sales.json",
+                                JSON.stringify(Sales),
+                                (err) => {
+                                    if (err) console.log(err);
+                                }
+                            );
+                            
+
+
+                            if (!metadata) {
+                                console.log("couldn't get metadata");                                
+                            }
+
+                            printSalesInfo(dateString, price, signature, metadata.name, marketplaceMap[marketplaceAccount], metadata.image);
+                            await postSaleToDiscord(metadata.name, price, dateString, signature, metadata.image, Sales)
+                            
+                        } else {
+                            console.log("not a supported marketplace sale");
+                            Sales.body.push(txn);
+                            Sales.done.push(signature);
+
+                            fs.writeFile(
+                                "./busts_sales.json",
+                                JSON.stringify(Sales),
+                                (err) => {
+                                    if (err) console.log(err);
+                                }
+                            );
+                        }
+                    }
+
+                } catch (err) {
+                    console.log("error while going through signatures: ", err);                    
+                }
+
+
+
+                iw--
+                if (iw >= 0) {
+                    readSignatures();
+                } else {
+                    console.log(`[] Problem Fetching - Signature`);
+                    runSalesBot();
+                }
+            }, 1000);
+
         }
 
         for (let i = signatures.length - 1; i >= 0; i--) {
-            try {
-                let { signature } = signatures[i];
-                const txn = await solanaConnection.getTransaction(signature);
-                if (txn.meta && txn.meta.err != null) { continue; }
-
-                const dateString = new Date(txn.blockTime * 1000).toLocaleString();
-                const price = Math.abs((txn.meta.preBalances[0] - txn.meta.postBalances[0])) / solanaWeb3.LAMPORTS_PER_SOL;
-                const accounts = txn.transaction.message.accountKeys;
-                const marketplaceAccount = accounts[accounts.length - 1].toString();
-                let key = false;
-
-                _jsonString = await fs.readFileSync('./busts_sales.json', 'utf8', (err, jsonString) => {
-                    if (err) {
-                        console.log("File read failed:", err)
-                        return
-                    }
-                })
-
-                JSON.parse(_jsonString).done.forEach(_sign => {                    
-                    if (_sign === signature) {
-                        key = true;
-                    }
-                });
-
-                if (key === false) {
-                    if (marketplaceMap[marketplaceAccount]) {
-                        const metadata = await getMetadata(txn.meta.postTokenBalances[0].mint);
-
-                        Sales.body.push(txn);
-                        Sales.done.push(signature);
-
-                        
-
-                        if (!metadata) {
-                            console.log("couldn't get metadata");
-                            continue;
-                        }
-
-                        printSalesInfo(dateString, price, signature, metadata.name, marketplaceMap[marketplaceAccount], metadata.image);
-                        await postSaleToDiscord(metadata.name, price, dateString, signature, metadata.image, Sales)
-                    } else {
-                        console.log("not a supported marketplace sale");
-                        Sales.body.push(txn);
-                        Sales.done.push(signature);
-
-                        fs.writeFile(
-                            "./busts_sales.json",
-                            JSON.stringify(Sales),
-                            (err) => {
-                                if (err) console.log(err);
-                            }
-                        );
-                    }
+            let {signature} = signatures[i];
+    
+            let _key = true, iterator = 0;
+            _jsonString = await fs.readFileSync('./busts_sales.json', 'utf8', (err, jsonString) => {
+                if (err) {
+                    console.log("File read failed:", err)                
                 }
+            })
+    
+            JSON.parse(_jsonString).done.forEach(_sign => {            
+                if (_sign != signature) {
 
-            } catch (err) {
-                console.log("error while going through signatures: ", err);
-                continue;
-            }
-        }
+                    _key = false;                                                            
+                    iw = signatures.length - iterator;           
+                    i = 0;         
+                }
+                iterator++
+            });
+            if (_key === false) {
+                console.log(signature+` Exist: ${_key} - Number: ${iw}`)      
+            } 
+    
+        } 
 
-        lastKnownSignature = signatures[0].signature;
-        if (lastKnownSignature) {
-            options.until = lastKnownSignature;
-        }
+        readSignatures();
+
+    } catch (error) {
+        console.log(error)
     }
+
+    lastKnownSignature = signatures[0].signature;
+    if (lastKnownSignature) {
+        options.until = lastKnownSignature;
+    }
+
 }
 runSalesBot();
 
@@ -185,13 +242,5 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                 }
             ]
         }
-    )
-
-    fs.writeFile(
-        "./busts_sales.json",
-        JSON.stringify(Sales),
-        (err) => {
-            if (err) console.log(err);
-        }
-    );
+    )    
 }
