@@ -157,11 +157,7 @@ const runSalesBot = async () => {
                     i = 0;         
                 }
                 iterator++
-            });
-            if (_key === false) {
-                console.log(signature+` Exist: ${_key} - Number: ${iw}`)      
-            } 
-    
+            });                
         } 
 
         readSignatures();

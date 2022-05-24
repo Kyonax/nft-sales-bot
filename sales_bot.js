@@ -157,11 +157,7 @@ const runSalesBot = async () => {
                     i = 0;         
                 }
                 iterator++
-            });
-            if (_key === false) {
-                console.log(signature+` Exist: ${_key} - Number: ${iw}`)      
-            } 
-    
+            });               
         } 
 
         readSignatures();
@@ -243,14 +239,5 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                 }
             ]
         }
-    )
-
-    fs.writeFile(
-        "./sales.json",
-        JSON.stringify(Sales),
-        (err) => {
-            if (err) console.log(err);
-        }
-    );
-
+    )    
 }
