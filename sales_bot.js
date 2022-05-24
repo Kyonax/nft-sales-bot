@@ -91,7 +91,7 @@ const runSalesBot = async () => {
                             Sales.body.push(txn);
                             Sales.done.push(signature);
 
-                            fs.writeFile(
+                            const writeData = await fs.writeFileSync(
                                 "./sales.json",
                                 JSON.stringify(Sales),
                                 (err) => {
@@ -113,7 +113,7 @@ const runSalesBot = async () => {
                             Sales.body.push(txn);
                             Sales.done.push(signature);
 
-                            fs.writeFile(
+                            const writeData2 = await fs.writeFileSync(
                                 "./sales.json",
                                 JSON.stringify(Sales),
                                 (err) => {
@@ -162,7 +162,7 @@ const runSalesBot = async () => {
             if (_key === false) {                        
                 Sales.done.push(signature);
 
-                fs.writeFile(
+                const writeData = await fs.writeFileSync(
                     "./busts_sales.json",
                     JSON.stringify(Sales),
                     (err) => {
