@@ -133,8 +133,7 @@ const runSalesBot = async () => {
                 if (iw >= 0) {
                     readSignatures();
                 } else {
-                    console.log(`[] Problem Fetching - Signature`);
-                    runSalesBot();
+                    console.log(`[] Problem Fetching - Signature`);                    
                 }
             }, 1000);
 
@@ -219,7 +218,7 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": "Date",
-                            "value": `${date}`,
+                            "value": `${date} UTC`,
                             "inline": true
                         },
                         {
