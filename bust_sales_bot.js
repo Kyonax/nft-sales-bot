@@ -237,7 +237,7 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": "Transaction",
-                            "value": `**[Solscan Signature](https://explorer.solana.com/tx/${signature}): ` + "`" + signature + "`" + `**`
+                            "value": `**[Solscan Signature](https://solscan.io/tx/${signature}): ` + "`" + signature + "`" + `**`
                         },                        
                         {
                             "name": `25% Royalties\n${_royalties_DEV}`,
@@ -250,7 +250,7 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": `75% Royalties\n${_royalties_DAO}`,
-                            "value": `**[Rottens DAO](https://solscan.io/tx/6zjwY1tbb3Lc2k6TcbAMWRHx6sQEVPt5Js7Aue6NkQH5)**`,
+                            "value": `**[Rottens DAO](https://solscan.io/tx/8vqe79fS3hecnwiZdF7fVqH9A3ZsdfTGgwgz3hMsPb1V)**`,
                             "inline": true
                         },
                         {
