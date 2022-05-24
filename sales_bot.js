@@ -159,17 +159,7 @@ const runSalesBot = async () => {
                 iterator++
             });  
             
-            if (_key === false) {                        
-                Sales.done.push(signature);
-
-                const writeData = await fs.writeFileSync(
-                    "./busts_sales.json",
-                    JSON.stringify(Sales),
-                    (err) => {
-                        if (err) console.log(err);
-                    }
-                );         
-            } 
+           
         } 
 
         readSignatures();
