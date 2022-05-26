@@ -5,7 +5,7 @@ const Sales = require("./sales.json")
 const fs = require("fs");
 
 process.env.PROJECT_ADDRESS = "6zjwY1tbb3Lc2k6TcbAMWRHx6sQEVPt5Js7Aue6NkQH5";
-process.env.DISCORD_URL = "https://discord.com/api/webhooks/945344240240697355/g0ATg3nHJJKJ4oqscmI6RSwJC5WTsIiB9bk-lGtX-u8Owe0Yt_WOv2EQF58Xl8731Tgj";
+process.env.DISCORD_URL = "https://discord.com/api/webhooks/979485093783535667/UD-QyE8Ft98R5EDrTV-fOUBFiSaAzhdq-1Y6F_gbbTiiEeMLQrv0A2_iWnNBkzr7H1Nu";
 
 if (!process.env.PROJECT_ADDRESS || !process.env.DISCORD_URL) {
     console.log("please set your environment variables!");
