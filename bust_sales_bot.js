@@ -15,7 +15,7 @@ if (!process.env.PROJECT_ADDRESS || !process.env.DISCORD_URL) {
 
 let _market, _jsonString, iw = 0;
 
-const projectPubKey = new solanaWeb3.PublicKey(process.env.PROJECT_ADDRESS);
+const projectPubKey = new solanaWeb3.PublicKey(process.env.PROJECT_ADDRESS); 
 const url = solanaWeb3.clusterApiUrl('mainnet-beta');
 const solanaConnection = new solanaWeb3.Connection(url, 'confirmed');
 const metaplexConnection = new Connection('mainnet-beta');
@@ -54,15 +54,14 @@ const runSalesBot = async () => {
       
 
     try {
-        iw = signatures.length - 1;
+        iw = (signatures.length) - 1;            
         function readSignatures() {
             setTimeout(async function () {
 
 
-                try {
-                    let { signature } = signatures[iw];
-                    const txn = await solanaConnection.getTransaction(signature);
-                    console.log(signature)
+                try {                    
+                    let { signature } = signatures[iw];                    
+                    const txn = await solanaConnection.getTransaction(signature);                    
                     if (txn.meta && txn.meta.err != null) { }
 
                     const dateString = new Date(txn.blockTime * 1000).toLocaleString();
@@ -137,6 +136,8 @@ const runSalesBot = async () => {
 
         }
 
+        let secure = true
+
         for (let i = signatures.length - 1; i >= 0; i--) {
 
             let {signature} = signatures[i];                            
@@ -154,14 +155,21 @@ const runSalesBot = async () => {
                 }                
                 iterator++
             });  
+
+            if (iterator > signatures.length) {
+                secure = false
+            }
             
             if (_key === false) {
-                iw = signatures.length - iterator;           
+                iw = signatures.length - iterator;    
+                console.log(`IW: ${iw} Signatures: ${signatures.length} Iterator: ${iterator}`)       
                 i = 0;
             }
         } 
 
-        readSignatures();
+        if (secure === true) {
+            readSignatures();
+        }
 
     } catch (error) {
         console.log(error)
