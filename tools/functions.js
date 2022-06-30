@@ -48,7 +48,7 @@ module.exports = {
                 await method(props, index);
 
                 index--
-                if (index > limit) {
+                if (index >= limit) {
                     loop();
                 } else {
                     console.log(`[] Data Done`);

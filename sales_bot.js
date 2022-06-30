@@ -171,7 +171,7 @@ const runSalesBot = async () => {
             await timer(pollingInterval);
         }
 
-        for (let _i = iw; _i > 0; _i--) {
+        for (let _i = iw; _i >= 0; _i--) {
             _ObjBustSales.done.forEach(_objsale => {
                 if (_objsale === signatures[_i].signature) {
                     iw--
