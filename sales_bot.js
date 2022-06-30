@@ -123,8 +123,7 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
     )
 }
 
-async function readSignatures(props, index) {
-    console.log(props.signatures[index], `INDEX: ${index}`)
+async function readSignatures(props, index) {    
     try {
         let _signatures = props.signatures, { signature, confirmationStatus } = _signatures[index], key = false;
         const txn = await solanaConnection.getTransaction(signature); if (txn.meta && txn.meta.err != null) { };
