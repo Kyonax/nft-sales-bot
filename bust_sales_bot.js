@@ -32,6 +32,10 @@ const marketplaceMap = {
     "A7p8451ktDCHq5yYaHczeLMYsjRsAkzc3hCXcSrwYHU7": "Digital Eyes",
     "AmK5g2XcyptVLCFESBCJqoSfwV3znGoVYQnqEnaAZKWn": "Exchange Art",
     "hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk": "OpenSea",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" : "Magic Eden",
+    "v47bNPpG5Gr5bRsEFfU23rsrby5Fm1J1LMuzoGNL1T7" : "Magic Eden",
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" : "Magic Eden",
+    "tXmQMQYgaLaE8YesLCsfk2ujSYCKhVrZh8ELwECzGkg" : "Magic Eden"
 };
 
 const timer = ms => new Promise(res => setTimeout(res, ms))
@@ -95,11 +99,11 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": "Transaction",
-                            "value": `**[Solscan Signature](https://solscan.io/tx/${signature}): ` + "`" + signature + "`" + `**`
+                            "value": `**[Solscan Signature](https://explorer.solana.com/tx/${signature}): ` + "`" + signature + "`" + `**`
                         },
                         {
                             "name": `25% Royalties\n${_royalties_DEV}`,
-                            "value": `**[Dev Team - RT](https://solscan.io/tx/D6HxbQa7juwKoMDTUHJtJWW6WLG9gzKfRA8iQmd2oZ1x)**`,
+                            "value": `**[Dev Team - RT](https://explorer.solana.com/address/D6HxbQa7juwKoMDTUHJtJWW6WLG9gzKfRA8iQmd2oZ1x)**`,
                             "inline": true
                         }, {
                             "name": '\u200B',
@@ -108,7 +112,7 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
                         },
                         {
                             "name": `75% Royalties\n${_royalties_DAO}`,
-                            "value": `**[Rottens DAO](https://solscan.io/tx/8vqe79fS3hecnwiZdF7fVqH9A3ZsdfTGgwgz3hMsPb1V)**`,
+                            "value": `**[Rottens DAO](https://explorer.solana.com/address/8vqe79fS3hecnwiZdF7fVqH9A3ZsdfTGgwgz3hMsPb1V)**`,
                             "inline": true
                         },
                         {
@@ -127,11 +131,12 @@ const postSaleToDiscord = (title, price, date, signature, imageURL, Sales) => {
 
 
 async function readSignatures(props, index) {
-     
+
     try {
         let _signatures = props.signatures, { signature, confirmationStatus } = _signatures[index], key = false;
         const txn = await solanaConnection.getTransaction(signature); if (txn.meta && txn.meta.err != null) { };
         const dateString = new Date(txn.blockTime * 1000).toLocaleString(), price = Math.abs((txn.meta.preBalances[0] - txn.meta.postBalances[0])) / solanaWeb3.LAMPORTS_PER_SOL, accounts = txn.transaction.message.accountKeys, marketplaceAccount = accounts[accounts.length - 1].toString();
+
 
         let ObjBustSales = await Exe.readJSON('./busts_sales.json'), _ObjBustSales = JSON.parse(ObjBustSales);
         _ObjBustSales.done.forEach(_sale => {
@@ -140,7 +145,8 @@ async function readSignatures(props, index) {
 
         _ObjBustSales.done.push(signature);
 
-        if (key === false) {                        
+        if (key === false) {                                  
+
             if (marketplaceMap[marketplaceAccount]) {
                 const metadata = await getMetadata(txn.meta.postTokenBalances[0].mint);
 
@@ -148,10 +154,12 @@ async function readSignatures(props, index) {
                     console.log("Couldn't get metadata");
                 }
 
+                if (!metadata.name.includes("Bust Sculpture")) return console.log("The Transaction is not a Bust Sculpture");
                 printSalesInfo(dateString, price, signature, metadata.name, marketplaceMap[marketplaceAccount], metadata.image, Math.abs(txn.meta.preBalances[0]), Math.abs(txn.meta.postBalances[0]), Math.abs(solanaWeb3.LAMPORTS_PER_SOL));
                 await postSaleToDiscord(metadata.name, price, dateString, signature, metadata.image, Sales)
             } else {
-                //console.log(`Signature [${signature}] - comes from a not supported marketplace.`);
+
+                console.log(`Signature [${signature}] - comes from a not supported marketplace.`);
             }
 
             await Exe.writeJSON(_ObjBustSales, "./busts_sales.json");
@@ -177,11 +185,11 @@ const runSalesBot = async () => {
 
         for (let _i = iw; _i >= 0; _i--) {
             _ObjBustSales.done.forEach(_objsale => {
-                if (_objsale === signatures[_i].signature) {                    
+                if (_objsale === signatures[_i].signature) {
                     iw--
                 }
             });
-        }        
+        }
 
         let _objProps = {
             signatures: signatures,
