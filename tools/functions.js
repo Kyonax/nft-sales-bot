@@ -89,5 +89,8 @@ module.exports = {
         for (let i in json) {
             await method(i)
         }
+    },
+    numberSeparator: function (x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 }
