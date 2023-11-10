@@ -11,6 +11,6 @@
   "dependencies": {
     "@metaplex/js": "^4.12.0",
     "@solana/web3.js": "^1.35.1",
-    "axios": "^0.24.0"
+    "axios": "^1.6.0"
   }
 }
